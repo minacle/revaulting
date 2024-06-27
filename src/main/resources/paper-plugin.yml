@@ -1,0 +1,14 @@
+name: Revaulting
+version: "${version}"
+main: moe.minacle.minecraft.plugins.revaulting.Plugin
+description: |
+  Revaulting: Enhance your Minecraft adventures by allowing Vaults to be reopened!
+authors:
+  - Minacle
+website: https://modrinth.com/plugin/revaulting
+api-version: "1.21"
+dependencies:
+  server:
+    NBTAPI:
+      load: BEFORE
+      required: true

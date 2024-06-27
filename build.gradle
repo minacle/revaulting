@@ -1,0 +1,71 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+plugins {
+    id "java"
+    id "io.github.goooler.shadow" version "8.1.7"
+    id "xyz.jpenilla.run-paper" version "2.3.0"
+}
+
+group = "moe.minacle.minecraft"
+version = "0.2.0"
+
+repositories {
+    mavenCentral()
+    maven {
+        name "CodeMC"
+        url "https://repo.codemc.io/repository/maven-public/"
+    }
+    maven {
+        name "PaperMC"
+        url "https://repo.papermc.io/repository/maven-public/"
+    }
+    maven {
+        name "Sonatype"
+        url "https://oss.sonatype.org/content/groups/public/"
+    }
+    maven {
+        name "Sonatype"
+        url "https://s01.oss.sonatype.org/content/groups/public/"
+    }
+}
+
+dependencies {
+    compileOnly "de.tr7zw:item-nbt-api-plugin:2.13.1"
+    compileOnly "io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT"
+    implementation "org.bstats:bstats-bukkit:3.0.2"
+    implementation "org.jetbrains:annotations:24.1.0"
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset "UTF-8"
+    filesMatching("paper-plugin.yml") {
+        expand props
+    }
+}
+
+tasks {
+    runServer {
+        downloadPlugins {
+            modrinth("nbtapi", "2.13.1")
+        }
+        minecraftVersion "1.21"
+    }
+}
+
+tasks.named("shadowJar", ShadowJar) {
+    enableRelocation true
+    relocationPrefix "moe.minacle.minecraft.plugins.revaulting.shadowjar"
+}
+
+shadowJar {
+    archiveClassifier.set("")
+    minimize()
+}
