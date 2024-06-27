@@ -9,7 +9,7 @@ Revaulting is a plugin that improves the Vault system in the Minecraft 1.21 upda
 - Updates Vault reward data so players can receive rewards again.
 
 ## Installation
-1. Download the [Revaulting plugin](#).
+1. Download the [Revaulting plugin](https://github.com/minacle/revaulting/releases/latest).
 2. Place the plugin file into your server's `plugins` folder.
 3. Download and install [NBT-API](https://modrinth.com/plugin/nbtapi) plugin, if not already installed.
 4. Restart the server.
