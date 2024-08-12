@@ -30,7 +30,7 @@ import io.papermc.paper.math.BlockPosition;
 import io.papermc.paper.math.Position;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 
-public class Plugin extends JavaPlugin implements Listener {
+public final class Plugin extends JavaPlugin implements Listener {
 
     private static final int BSTATS_PLUGIN_ID = 22418;
 
@@ -47,16 +47,13 @@ public class Plugin extends JavaPlugin implements Listener {
     }
 
     private @NotNull Set<BlockPosition> collectBlockPositions(final @NotNull World world) {
-        List<Player> players = world.getPlayers();
-        HashSet<BlockPosition> blockPositions = HashSet.newHashSet(343 * players.size());
-        Location location;
-        int blockX;
-        int blockY;
-        int blockZ;
-        int x;
-        int y;
-        int z;
+        final List<Player> players = world.getPlayers();
+        final HashSet<BlockPosition> blockPositions = HashSet.newHashSet(343 * players.size());
         for (final Player player : players) {
+            final Location location;
+            final int blockX;
+            final int blockY;
+            final int blockZ;
             if (!player.isConnected() || player.getGameMode() == GameMode.SPECTATOR)
                 continue;
             location = player.getLocation();
@@ -65,19 +62,18 @@ public class Plugin extends JavaPlugin implements Listener {
             blockX = location.getBlockX();
             blockY = location.getBlockY();
             blockZ = location.getBlockZ();
-            for (x = blockX - 3; x < blockX + 3; x++)
-                for (y = blockY - 3; y < blockY + 3; y++)
-                    for (z = blockZ - 3; z < blockZ + 3; z++)
+            for (int x = blockX - 3; x < blockX + 3; x++)
+                for (int y = blockY - 3; y < blockY + 3; y++)
+                    for (int z = blockZ - 3; z < blockZ + 3; z++)
                         blockPositions.add(Position.block(x, y, z));
         }
         return blockPositions;
     }
 
     private @NotNull Set<Block> collectVaults(final @NotNull World world, final @NotNull Set<BlockPosition> blockPositions) {
-        HashSet<Block> vaults = new HashSet<>();
-        Block block;
+        final HashSet<Block> vaults = new HashSet<>();
         for (final BlockPosition blockPosition : blockPositions) {
-            block = world.getBlockAt(blockPosition.blockX(), blockPosition.blockY(), blockPosition.blockZ());
+            final Block block = world.getBlockAt(blockPosition.blockX(), blockPosition.blockY(), blockPosition.blockZ());
             if (block.getType() == Material.VAULT)
                 vaults.add(block);
         }
@@ -94,9 +90,9 @@ public class Plugin extends JavaPlugin implements Listener {
             NBT.modify(
                 vault,
                 (nbt) -> {
-                    ReadWriteNBT serverData = nbt.getCompound("server_data");
-                    ReadWriteNBTList<UUID> rewardedPlayers;
-                    List<UUID> result;
+                    final ReadWriteNBT serverData = nbt.getCompound("server_data");
+                    final ReadWriteNBTList<UUID> rewardedPlayers;
+                    final List<UUID> result;
                     if (serverData == null)
                         return null;
                     rewardedPlayers = serverData.getUUIDList("rewarded_players");
@@ -113,10 +109,9 @@ public class Plugin extends JavaPlugin implements Listener {
             (nbt) -> {
                 ReadWriteNBTList<UUID> rewardedPlayers = nbt.getUUIDList(REWARDED_PLAYERS);
                 ReadWriteNBTList<Integer> rewardedCounts = nbt.getIntegerList(REWARDED_COUNTS);
-                int rewardedPlayersSize;
-                int rewardedCountsSize;
+                final int rewardedPlayersSize;
+                final int rewardedCountsSize;
                 int index;
-                int count;
                 if (rewardedPlayers == null) {
                     ReadWriteNBT uuidList = NBT.parseNBT("[[I;0,0,0,0]]");
                     nbt.set(REWARDED_PLAYERS, uuidList, NBTHandlers.STORE_READWRITE_TAG);
@@ -141,10 +136,8 @@ public class Plugin extends JavaPlugin implements Listener {
                         rewardedPlayers.add(player);
                         rewardedCounts.add(1);
                     }
-                    else {
-                        count = rewardedCounts.get(index);
-                        rewardedCounts.set(index, count + 1);
-                    }
+                    else
+                        rewardedCounts.set(index, rewardedCounts.get(index) + 1);
                 }
                 if (rewardedPlayers.get(0).equals(Plugin.UUID_ZERO)) {
                     rewardedPlayers.remove(0);
@@ -160,7 +153,7 @@ public class Plugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         super.onEnable();
-        Server server = getServer();
+        final Server server = getServer();
         new Metrics(this, BSTATS_PLUGIN_ID);
         server.getPluginManager().registerEvents(this, this);
         vaultManipulationTask =
