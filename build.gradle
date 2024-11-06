@@ -30,9 +30,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly "de.tr7zw:item-nbt-api-plugin:2.13.2"
+    compileOnly "de.tr7zw:item-nbt-api-plugin:2.14.0"
     compileOnly "io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT"
-    implementation "org.bstats:bstats-bukkit:3.0.2"
+    implementation "org.bstats:bstats-bukkit:3.1.0"
     implementation "org.jetbrains:annotations:24.1.0"
 }
 
@@ -54,7 +54,7 @@ processResources {
 tasks {
     runServer {
         downloadPlugins {
-            modrinth("nbtapi", "2.13.2")
+            modrinth("nbtapi", "2.14.0")
         }
         minecraftVersion "1.21.1"
     }
