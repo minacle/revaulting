@@ -33,7 +33,6 @@ dependencies {
     compileOnly "de.tr7zw:item-nbt-api-plugin:2.14.0"
     compileOnly "io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT"
     implementation "org.bstats:bstats-bukkit:3.1.0"
-    implementation "org.jetbrains:annotations:24.1.0"
 }
 
 java {
