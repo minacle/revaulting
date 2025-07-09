@@ -6,6 +6,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import org.bstats.bukkit.Metrics;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,15 +21,12 @@ import org.bukkit.block.Vault;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import de.tr7zw.nbtapi.NBT;
 import de.tr7zw.nbtapi.NBTType;
 import de.tr7zw.nbtapi.handler.NBTHandlers;
 import de.tr7zw.nbtapi.iface.ReadWriteNBT;
 import de.tr7zw.nbtapi.iface.ReadWriteNBTList;
-import de.tr7zw.nbtapi.utils.Metrics;
 import io.papermc.paper.math.BlockPosition;
 import io.papermc.paper.math.Position;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
