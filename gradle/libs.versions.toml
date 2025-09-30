@@ -1,0 +1,12 @@
+[versions]
+minecraft = "1.21.9"
+bstats = "3.1.0"
+shadow = "9.2.2"
+run-paper = "3.0.0"
+
+[libraries]
+bstats-bukkit = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }
