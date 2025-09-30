@@ -2,7 +2,7 @@ name: Revaulting
 version: "${version}"
 main: moe.minacle.minecraft.plugins.revaulting.Plugin
 description: |
-  Revaulting: Enhance your Minecraft adventures by allowing Vaults to be reopened!
+  Remove the one-time limit of Vaults and Ominous Vaults.
 authors:
   - Minacle
 website: https://modrinth.com/plugin/revaulting
