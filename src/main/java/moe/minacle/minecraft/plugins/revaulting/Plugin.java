@@ -1,5 +1,7 @@
 package moe.minacle.minecraft.plugins.revaulting;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -20,13 +22,10 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Vault;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import de.tr7zw.nbtapi.NBT;
-import de.tr7zw.nbtapi.NBTType;
-import de.tr7zw.nbtapi.handler.NBTHandlers;
-import de.tr7zw.nbtapi.iface.ReadWriteNBT;
-import de.tr7zw.nbtapi.iface.ReadWriteNBTList;
 import io.papermc.paper.math.BlockPosition;
 import io.papermc.paper.math.Position;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
@@ -35,11 +34,9 @@ public final class Plugin extends JavaPlugin implements Listener {
 
     private static final int BSTATS_PLUGIN_ID = 22418;
 
-    private static final @NotNull UUID UUID_ZERO = new UUID(0, 0);
+    private final @NotNull NamespacedKey REWARDED_PLAYERS_KEY = Objects.requireNonNull(namespacedKey("rewarded_players"));
 
-    private final @NotNull String REWARDED_PLAYERS = Objects.requireNonNull(namespacedKey("rewarded_players")).toString();
-
-    private final @NotNull String REWARDED_COUNTS = Objects.requireNonNull(namespacedKey("rewarded_counts")).toString();
+    private final @NotNull NamespacedKey REWARDED_COUNTS_KEY = Objects.requireNonNull(namespacedKey("rewarded_counts"));
 
     private @Nullable ScheduledTask vaultManipulationTask;
 
@@ -83,70 +80,58 @@ public final class Plugin extends JavaPlugin implements Listener {
 
     private void manipulateVault(final @NotNull Block block) {
         final Vault vault;
-        final List<UUID> newRewardedPlayers;
+        final Collection<UUID> newRewardedPlayers;
+        final PersistentDataContainer persistentDataContainer;
+        final List<int[]> rewardedPlayers;
+        final List<Integer> rewardedCounts;
         if (block.getType() != Material.VAULT)
             return;
         vault = (Vault)block.getState();
-        newRewardedPlayers =
-            NBT.modify(
-                vault,
-                (nbt) -> {
-                    final ReadWriteNBT serverData = nbt.getCompound("server_data");
-                    final ReadWriteNBTList<UUID> rewardedPlayers;
-                    final List<UUID> result;
-                    if (serverData == null)
-                        return null;
-                    rewardedPlayers = serverData.getUUIDList("rewarded_players");
-                    if (rewardedPlayers == null)
-                        return null;
-                    result = rewardedPlayers.toListCopy();
-                    rewardedPlayers.clear();
-                    return result;
-                });
-        if (newRewardedPlayers == null || newRewardedPlayers.isEmpty())
-            return;
-        NBT.modifyPersistentData(
-            vault,
-            (nbt) -> {
-                ReadWriteNBTList<UUID> rewardedPlayers = nbt.getUUIDList(REWARDED_PLAYERS);
-                ReadWriteNBTList<Integer> rewardedCounts = nbt.getIntegerList(REWARDED_COUNTS);
-                final int rewardedPlayersSize;
-                final int rewardedCountsSize;
-                int index;
-                if (rewardedPlayers == null) {
-                    ReadWriteNBT uuidList = NBT.parseNBT("[[I;0,0,0,0]]");
-                    nbt.set(REWARDED_PLAYERS, uuidList, NBTHandlers.STORE_READWRITE_TAG);
-                    rewardedPlayers = nbt.getUUIDList(REWARDED_PLAYERS);
+        newRewardedPlayers = vault.getRewardedPlayers();
+        for (final UUID player : newRewardedPlayers)
+            vault.removeRewardedPlayer(player);
+        persistentDataContainer = vault.getPersistentDataContainer();
+        rewardedPlayers =
+            new ArrayList<>(
+                persistentDataContainer.getOrDefault(
+                    REWARDED_PLAYERS_KEY,
+                    PersistentDataType.LIST.integerArrays(),
+                    List.of()));
+        rewardedCounts =
+            new ArrayList<>(
+                persistentDataContainer.getOrDefault(
+                    REWARDED_COUNTS_KEY,
+                    PersistentDataType.LIST.integers(),
+                    List.of()));
+        for (final UUID player : newRewardedPlayers) {
+            final int[] intArrayUUID =
+                new int[] {
+                    (int)(player.getMostSignificantBits() >> 32),
+                    (int)player.getMostSignificantBits(),
+                    (int)(player.getLeastSignificantBits() >> 32),
+                    (int)player.getLeastSignificantBits(),
+                };
+            int playerIndex = -1;
+            for (int index = 0; index < rewardedPlayers.size(); index++) {
+                if (rewardedPlayers.get(index)[0] == intArrayUUID[0] &&
+                    rewardedPlayers.get(index)[1] == intArrayUUID[1] &&
+                    rewardedPlayers.get(index)[2] == intArrayUUID[2] &&
+                    rewardedPlayers.get(index)[3] == intArrayUUID[3]
+                ) {
+                    playerIndex = index;
+                    break;
                 }
-                if (rewardedCounts == null) {
-                    ReadWriteNBT integerList = NBT.parseNBT("[0]");
-                    nbt.set(REWARDED_COUNTS, integerList, NBTHandlers.STORE_READWRITE_TAG);
-                    rewardedCounts = nbt.getIntegerList(REWARDED_COUNTS);
-                }
-                rewardedPlayersSize = rewardedPlayers.size();
-                rewardedCountsSize = rewardedCounts.size();
-                if (rewardedPlayersSize > rewardedCountsSize)
-                    for (index = rewardedCountsSize; index < rewardedPlayersSize; index++)
-                        rewardedCounts.add(1);
-                else if (rewardedPlayersSize < rewardedCountsSize)
-                    for (index = rewardedPlayersSize; index < rewardedCountsSize; index++)
-                        rewardedCounts.remove(rewardedPlayersSize);
-                for (final UUID player : newRewardedPlayers) {
-                    index = rewardedPlayers.indexOf(player);
-                    if (index == -1) {
-                        rewardedPlayers.add(player);
-                        rewardedCounts.add(1);
-                    }
-                    else
-                        rewardedCounts.set(index, rewardedCounts.get(index) + 1);
-                }
-                if (rewardedPlayers.get(0).equals(Plugin.UUID_ZERO)) {
-                    rewardedPlayers.remove(0);
-                    rewardedCounts.remove(0);
-                }
-                if (nbt.hasTag("__nbtapi", NBTType.NBTTagString))
-                    nbt.removeKey("__nbtapi");
-            });
+            }
+            if (playerIndex == -1) {
+                rewardedPlayers.add(intArrayUUID);
+                rewardedCounts.add(1);
+            }
+            else
+                rewardedCounts.set(playerIndex, rewardedCounts.get(playerIndex) + 1);
+        }
+        persistentDataContainer.set(REWARDED_PLAYERS_KEY, PersistentDataType.LIST.integerArrays(), rewardedPlayers);
+        persistentDataContainer.set(REWARDED_COUNTS_KEY, PersistentDataType.LIST.integers(), rewardedCounts);
+        vault.update();
     }
 
     // MARK: JavaPlugin
