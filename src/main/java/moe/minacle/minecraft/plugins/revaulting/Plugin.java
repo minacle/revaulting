@@ -301,7 +301,7 @@ public final class Plugin extends JavaPlugin implements Listener {
             reserveVaultCooldownForPlayer(event.getBlock(), playerUUID);
             return;
         }
-        else if (event.getCurrentState() != org.bukkit.block.data.type.Vault.State.EJECTING)
+        if (event.getCurrentState() != org.bukkit.block.data.type.Vault.State.EJECTING)
             return;
         if (delayTicks > 0) {
             final org.bukkit.block.Vault vaultState = (org.bukkit.block.Vault)event.getBlock().getState();
