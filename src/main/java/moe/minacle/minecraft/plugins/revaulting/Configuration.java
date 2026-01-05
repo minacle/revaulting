@@ -13,7 +13,7 @@ public final class Configuration {
 
     private static final @NotNull String VAULT_KEY = "vault";
 
-    public abstract class Section {
+    public static abstract class Section {
 
         private final @NotNull String path;
 
@@ -59,13 +59,13 @@ public final class Configuration {
 
         public int getVault() {
             if (vault == null)
-                vault = getFileConfiguration().getInt(getPathForKey(VAULT_KEY), 0);
+                vault = Math.max(getFileConfiguration().getInt(getPathForKey(VAULT_KEY), 0), 0);
             return vault;
         }
 
         public int getOminousVault() {
             if (ominousVault == null)
-                ominousVault = getFileConfiguration().getInt(getPathForKey(OMINOUS_VAULT_KEY), 0);
+                ominousVault = Math.max(getFileConfiguration().getInt(getPathForKey(OMINOUS_VAULT_KEY), 0), 0);
             return ominousVault;
         }
     }

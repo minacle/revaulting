@@ -55,7 +55,7 @@ public final class Plugin extends JavaPlugin implements Listener {
     private static @NotNull Map<@NotNull UUID, @NotNull Long> deserializeCooldownMap(final @NotNull List<int @NotNull []> players, final @NotNull List<@NotNull Long> ticks) {
         final Map<UUID, Long> map = new HashMap<>(players.size());
         for (int i = 0; i < players.size(); i++)
-            map.put(intArrayToUuid(players.get(i)), ticks.get(i));
+            map.put(intArrayToUuid(players.get(i)), i < ticks.size() ? ticks.get(i) : 0L);
         return map;
     }
 
@@ -69,7 +69,7 @@ public final class Plugin extends JavaPlugin implements Listener {
     private static @NotNull Map<@NotNull UUID, @NotNull Integer> deserializeRewardedMap(final @NotNull List<int @NotNull []> players, final @NotNull List<@NotNull Integer> counts) {
         final Map<UUID, Integer> map = new HashMap<>(players.size());
         for (int i = 0; i < players.size(); i++)
-            map.put(intArrayToUuid(players.get(i)), counts.get(i));
+            map.put(intArrayToUuid(players.get(i)), i < counts.size() ? counts.get(i) : 0);
         return map;
     }
 
@@ -120,6 +120,7 @@ public final class Plugin extends JavaPlugin implements Listener {
         blockListPool = BLOCK_LIST_POOL.get();
         poolIndex = 0;
         blocksByChunk.clear();
+        blockListPool.clear();
         for (int x = blockX - 3; x <= blockX + 3; x++) {
             for (int y = blockY - 3; y <= blockY + 3; y++) {
                 for (int z = blockZ - 3; z <= blockZ + 3; z++) {
@@ -161,6 +162,8 @@ public final class Plugin extends JavaPlugin implements Listener {
                     }
                 });
         }
+        blocksByChunk.clear();
+        blockListPool.clear();
     }
 
     private void checkVaultCooldowns(final @NotNull Block block) {
@@ -280,7 +283,7 @@ public final class Plugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    private void onVaultChangeState(final @NotNull VaultChangeStateEvent event) {
+    public void onVaultChangeState(final @NotNull VaultChangeStateEvent event) {
         final int delayTicks;
         if (((org.bukkit.block.data.type.Vault)event.getBlock().getBlockData()).isOminous())
             delayTicks = configuration.getDelay().getOminousVault();
