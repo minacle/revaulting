@@ -1,8 +1,8 @@
 # Delay settings (in ticks) used by the plugin to control per-player Vault cooldown reset timing
 delay:
 
-  # Cooldown delay (ticks) for normal Vault blocks; 0 disables the delay behaviour
+  # Cooldown delay (ticks) for normal Vault blocks; 0 means immediate reset
   vault: 0
 
-  # Cooldown delay (ticks) for ominous Vault blocks; 0 disables the delay behaviour
+  # Cooldown delay (ticks) for ominous Vault blocks; 0 means immediate reset
   ominous-vault: 0

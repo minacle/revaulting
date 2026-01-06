@@ -70,9 +70,9 @@ public final class Configuration {
         }
     }
 
-    private @NotNull FileConfiguration fileConfiguration;
+    private final @NotNull FileConfiguration fileConfiguration;
 
-    private @NotNull DelaySection delay;
+    private final @NotNull DelaySection delay;
 
     public Configuration(final @NotNull Plugin plugin) {
         fileConfiguration = plugin.getConfig();

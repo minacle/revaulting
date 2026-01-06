@@ -33,10 +33,6 @@ public final class Plugin extends JavaPlugin implements Listener {
 
     private static final int BSTATS_PLUGIN_ID = 22418;
 
-    private static final @NotNull ThreadLocal<@NotNull Map<@NotNull Long, @NotNull List<int @NotNull []>>> CHUNK_MAP_POOL = ThreadLocal.withInitial(HashMap::new);
-
-    private static final @NotNull ThreadLocal<@NotNull List<@NotNull List<int @NotNull []>>> BLOCK_LIST_POOL = ThreadLocal.withInitial(ArrayList::new);
-
     private static int @NotNull [] uuidToIntArray(final @NotNull UUID uuid) {
         return new int[] {
             (int)(uuid.getMostSignificantBits() >> 32),
@@ -105,8 +101,6 @@ public final class Plugin extends JavaPlugin implements Listener {
         final int blockY;
         final int blockZ;
         final Map<Long, List<int[]>> blocksByChunk;
-        final List<List<int[]>> blockListPool;
-        int poolIndex;
         if (!player.isConnected() || player.getGameMode() == GameMode.SPECTATOR)
             return;
         if ((location = player.getLocation()) == null)
@@ -116,31 +110,14 @@ public final class Plugin extends JavaPlugin implements Listener {
         blockX = location.getBlockX();
         blockY = location.getBlockY();
         blockZ = location.getBlockZ();
-        blocksByChunk = CHUNK_MAP_POOL.get();
-        blockListPool = BLOCK_LIST_POOL.get();
-        poolIndex = 0;
-        blocksByChunk.clear();
-        blockListPool.clear();
+        blocksByChunk = new HashMap<>();
         for (int x = blockX - 3; x <= blockX + 3; x++) {
             for (int y = blockY - 3; y <= blockY + 3; y++) {
                 for (int z = blockZ - 3; z <= blockZ + 3; z++) {
                     final int chunkX = x >> 4;
                     final int chunkZ = z >> 4;
                     final long chunkKey = ((long)chunkX << 32) | (chunkZ & 0xFFFFFFFFL);
-                    List<int[]> blockList = blocksByChunk.get(chunkKey);
-                    if (blockList == null) {
-                        if (poolIndex < blockListPool.size()) {
-                            blockList = blockListPool.get(poolIndex);
-                            blockList.clear();
-                        }
-                        else {
-                            blockList = new ArrayList<>();
-                            blockListPool.add(blockList);
-                        }
-                        poolIndex++;
-                        blocksByChunk.put(chunkKey, blockList);
-                    }
-                    blockList.add(new int[] {x, y, z});
+                    blocksByChunk.computeIfAbsent(chunkKey, $ -> new ArrayList<>()).add(new int[] {x, y, z});
                 }
             }
         }
@@ -162,8 +139,6 @@ public final class Plugin extends JavaPlugin implements Listener {
                     }
                 });
         }
-        blocksByChunk.clear();
-        blockListPool.clear();
     }
 
     private void checkVaultCooldowns(final @NotNull Block block) {
@@ -290,9 +265,15 @@ public final class Plugin extends JavaPlugin implements Listener {
         else
             delayTicks = configuration.getDelay().getVault();
         if (event.getNewState() == org.bukkit.block.data.type.Vault.State.UNLOCKING && delayTicks > 0) {
-            final UUID playerUUID = event.getPlayer().getUniqueId();
-            final org.bukkit.block.Vault vaultState = (org.bukkit.block.Vault)event.getBlock().getState();
-            final PersistentDataContainer persistentDataContainer = vaultState.getPersistentDataContainer();
+            final Player player = event.getPlayer();
+            final UUID playerUUID;
+            final org.bukkit.block.Vault vaultState;
+            final PersistentDataContainer persistentDataContainer;
+            if (player == null)
+                return;
+            playerUUID = player.getUniqueId();
+            vaultState = (org.bukkit.block.Vault)event.getBlock().getState();
+            persistentDataContainer = vaultState.getPersistentDataContainer();
             persistentDataContainer.set(
                 UNLOCKING_PLAYER_KEY,
                 PersistentDataType.INTEGER_ARRAY,
