@@ -22,6 +22,33 @@ Revaulting is a simple PaperMC plugin that removes the one-time limitation of Va
 3. Restart (or reload) your PaperMC server.
 4. Vaults and Ominous Vaults in Trial Chambers are now reusable!
 
+## ⚙️ Configuration
+
+Revaulting is designed to work out-of-the-box, but you can optionally adjust cooldown reset timing.
+
+- **Config file location**: `plugins/Revaulting/config.yml`
+  - The file is generated on first run.
+- **Time unit**: values are in **ticks** (`20 ticks = 1 second`).
+- **Valid values**: non-negative integers. Negative values (if set) are treated as `0`.
+
+### Options
+
+```yml
+delay:
+  # Cooldown delay (ticks) for normal Vault blocks; 0 means immediate reset
+  vault: 0
+
+  # Cooldown delay (ticks) for ominous Vault blocks; 0 means immediate reset
+  ominous-vault: 0
+```
+
+- `delay.vault`
+  - Per-player cooldown reset delay for **normal** Vault blocks.
+- `delay.ominous-vault`
+  - Per-player cooldown reset delay for **ominous** Vault blocks.
+
+After changing the config, restart the server to apply it.
+
 ## 📊 Data Storage
 
 Revaulting stores the number of times each player has opened a Vault using Persistent Data Containers.

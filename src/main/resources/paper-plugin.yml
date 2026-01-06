@@ -7,3 +7,4 @@ authors:
   - Minacle
 website: https://modrinth.com/plugin/revaulting
 api-version: "1.21"
+folia-supported: true
