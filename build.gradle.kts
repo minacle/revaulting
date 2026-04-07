@@ -16,13 +16,13 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:${libs.versions.minecraft.get()}-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:${libs.versions.minecraft.get()}.build.${libs.versions.paper.build.get()}")
     implementation(libs.bstats.bukkit)
 }
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
