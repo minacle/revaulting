@@ -1,6 +1,6 @@
 [versions]
-minecraft = "26.1.1"
-paper-build = "29-alpha"
+minecraft = "26.3"
+paper-build = "255-stable"
 bstats = "3.2.1"
 shadow = "9.4.1"
 run-paper = "3.0.2"
