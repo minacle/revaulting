@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.bstats.bukkit.Metrics;
+import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -19,6 +20,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -100,7 +102,6 @@ public final class Plugin extends JavaPlugin implements Listener {
         final int blockX;
         final int blockY;
         final int blockZ;
-        final Map<Long, List<int[]>> blocksByChunk;
         if (!player.isConnected() || player.getGameMode() == GameMode.SPECTATOR)
             return;
         if ((location = player.getLocation()) == null)
@@ -110,50 +111,46 @@ public final class Plugin extends JavaPlugin implements Listener {
         blockX = location.getBlockX();
         blockY = location.getBlockY();
         blockZ = location.getBlockZ();
-        blocksByChunk = new HashMap<>();
-        for (int x = blockX - 3; x <= blockX + 3; x++) {
-            for (int y = blockY - 3; y <= blockY + 3; y++) {
-                for (int z = blockZ - 3; z <= blockZ + 3; z++) {
-                    final int chunkX = x >> 4;
-                    final int chunkZ = z >> 4;
-                    final long chunkKey = ((long)chunkX << 32) | (chunkZ & 0xFFFFFFFFL);
-                    blocksByChunk.computeIfAbsent(chunkKey, $ -> new ArrayList<>()).add(new int[] {x, y, z});
-                }
+        for (int chunkX = (blockX - 3) >> 4; chunkX <= (blockX + 3) >> 4; chunkX++)
+            for (int chunkZ = (blockZ - 3) >> 4; chunkZ <= (blockZ + 3) >> 4; chunkZ++) {
+                final int x = chunkX;
+                final int z = chunkZ;
+                getServer().getRegionScheduler().execute(
+                    this,
+                    world,
+                    x,
+                    z,
+                    () -> {
+                        final Chunk chunk;
+                        final Collection<BlockState> tileEntities;
+                        if (!world.isChunkLoaded(x, z))
+                            return;
+                        chunk = world.getChunkAt(x, z);
+                        tileEntities =
+                            chunk.getTileEntities(
+                                ($_0) ->
+                                    Math.abs($_0.getX() - blockX) <= 3 &&
+                                    Math.abs($_0.getY() - blockY) <= 3 &&
+                                    Math.abs($_0.getZ() - blockZ) <= 3 &&
+                                    $_0.getType() == Material.VAULT,
+                                true);
+                        for (final var state : tileEntities)
+                            if (state instanceof org.bukkit.block.Vault vaultState)
+                                checkVaultCooldowns(vaultState);
+                    });
             }
-        }
-        for (final var entry : blocksByChunk.entrySet()) {
-            final long chunkKey = entry.getKey();
-            final int chunkX = (int)(chunkKey >> 32);
-            final int chunkZ = (int)chunkKey;
-            final List<int[]> blocks = entry.getValue();
-            getServer().getRegionScheduler().execute(
-                this,
-                world,
-                chunkX,
-                chunkZ,
-                () -> {
-                    for (final var coords : blocks) {
-                        final Block block = world.getBlockAt(coords[0], coords[1], coords[2]);
-                        if (block.getType() == Material.VAULT)
-                            checkVaultCooldowns(block);
-                    }
-                });
-        }
     }
 
-    private void checkVaultCooldowns(final @NotNull Block block) {
+    private void checkVaultCooldowns(final @NotNull org.bukkit.block.Vault vaultState) {
+        final Block block = vaultState.getBlock();
         final long currentTick;
-        final org.bukkit.block.Vault vaultState;
         final org.bukkit.block.data.type.Vault vaultBlockData;
         final PersistentDataContainer persistentDataContainer;
         final Map<UUID, Long> cooldownMap;
         final List<UUID> cooldownPlayersToRemove = new ArrayList<>();
         final Collection<UUID> rewardedPlayers;
         final int cooldownTicks;
-        if (block.getType() != Material.VAULT)
-            return;
         currentTick = block.getWorld().getGameTime();
-        vaultState = (org.bukkit.block.Vault)block.getState();
         vaultBlockData = (org.bukkit.block.data.type.Vault)block.getBlockData();
         persistentDataContainer = vaultState.getPersistentDataContainer();
         cooldownMap = deserializeCooldownMap(
@@ -170,10 +167,9 @@ public final class Plugin extends JavaPlugin implements Listener {
             cooldownTicks = configuration.getDelay().getOminousVault();
         else
             cooldownTicks = configuration.getDelay().getVault();
-        for (final var player : rewardedPlayers) {
+        for (final var player : rewardedPlayers)
             if (!cooldownMap.containsKey(player))
                 cooldownMap.put(player, Long.MIN_VALUE);
-        }
         for (final var entry : cooldownMap.entrySet()) {
             final long startTick = entry.getValue();
             final long elapsedTicks;
